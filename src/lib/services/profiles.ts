@@ -2,7 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import * as q from "@/lib/db/queries/profiles";
-import type { Profile } from "@/lib/types";
+import type { PersonRef, Profile } from "@/lib/types";
 import type { ProfileInput, ProfileUpdateInput } from "@/lib/validation/profiles";
 import { AppError } from "./errors";
 import { toProfile } from "./mappers";
@@ -110,4 +110,9 @@ export async function restoreProfile(actor: Profile, id: string): Promise<void> 
     }
     await q.updateProfile(tx, id, { archivedAt: null });
   });
+}
+
+/** Active family members for pickers (assignee, rotation). */
+export async function listPeople(): Promise<PersonRef[]> {
+  return (await q.listActiveProfiles(getDb())).map((p) => ({ id: p.id, name: p.name, avatar: p.avatar }));
 }

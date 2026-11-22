@@ -3,6 +3,8 @@ import type { Profile } from "@/lib/types";
 
 const NAV = [
   { href: "/today", label: "Today" },
+  { href: "/chores", label: "Chores" },
+  { href: "/history", label: "History" },
   { href: "/settings", label: "Settings" },
 ];
 

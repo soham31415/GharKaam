@@ -8,6 +8,20 @@
       "when": 1795324406493,
       "tag": "0000_init_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795333471801,
+      "tag": "0001_chores",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795333477847,
+      "tag": "0002_realtime_triggers",
+      "breakpoints": true
     }
   ]
 }

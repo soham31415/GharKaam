@@ -23,3 +23,6 @@ export const PUBLIC_PATH_PREFIXES = [
   "/_next",
   "/favicon.ico",
 ];
+
+/** Public Realtime channel the database pings after every change (see drizzle/0002_realtime_triggers.sql). */
+export const REALTIME_CHANNEL = "gharkaam-sync";

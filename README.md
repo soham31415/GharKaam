@@ -6,7 +6,7 @@ A small PWA for one family to share recurring chores and keep the home stocked.
 - **Instant updates** between phones via Supabase Realtime (data-less "something changed" pings).
 - **Daily digest** push notification around 8 AM IST.
 
-> Status: phase 1 of 6 (setup, passcode gate, profiles). Chores, inventory, PWA and push follow.
+> Status: phase 2 of 6 (setup, passcode, profiles, chores). Inventory, PWA and push follow.
 
 ## Stack
 
@@ -43,7 +43,10 @@ Requirements: Node 22+, npm.
      Don't use the "Direct connection" string: on the free plan it is IPv6-only and Vercel can't reach it.
    - **FAMILY_PASSCODE**: the passcode your family will type once per device.
    - **SESSION_SECRET**: `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
-   - The Realtime, VAPID and cron values are needed from later phases; leave them for now.
+   - **NEXT_PUBLIC_SUPABASE_URL**: `https://<project-ref>.supabase.co`.
+   - **NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY**: Supabase → Project Settings → API Keys → *Publishable key*
+     (`sb_publishable_…`). Only used to listen for "something changed" pings; it can't read any data.
+   - The VAPID and cron values are needed from later phases; leave them for now.
 4. Check the connection: `npm run db:check` (explains what is wrong if it fails), then create the tables: `npm run db:migrate`
 5. Start the app: `npm run dev` → http://localhost:3000
 
@@ -63,8 +66,29 @@ Add everyone else under **Settings → Manage profiles**.
 | `npm run db:migrate` | Apply pending migrations (uses `DIRECT_DATABASE_URL`) |
 | `npm run db:check` | Test both database URLs and explain any connection problem |
 | `npm run db:studio` | Browse the database |
-| `npm run seed` | Sample family (Mom & Dad admins, Rohan, Priya). Only on an empty DB |
+| `npm run seed` | Sample family (Mom & Dad admins, Rohan, Priya) and 12 chores. Only on an empty DB |
 | `npm run seed -- --reset` | **Wipes all app data**, then seeds. Don't run this once the family uses the app |
+
+## How chores work
+
+- Each chore has at most **one open task**. Missed dates never pile up.
+- **Repeats:** one time, every N days, weekly on chosen days, monthly on a date (29–31 fall back to the
+  month's last day), last day of the month, "2nd Saturday" style, yearly, or a custom iCalendar RRULE.
+- **Next date** is counted either *on the calendar* (bins every Tuesday: done late on Wednesday → next Tuesday)
+  or *from when it was last done* (water every 3 days: done Thursday → Sunday).
+- **Take turns:** the next task goes to the person after whoever's turn it *was*, even if someone else did it.
+  Skipping also passes the turn on. Archived people are skipped.
+- **Undo** works on a chore's most recent done/skip. **Reassign** and **Move** change one task only.
+- Editing a chore's title keeps the open task as is; changing its schedule recalculates the open task's date.
+- All dates are Asia/Kolkata. For testing, `GHARKAAM_FAKE_TODAY=2026-12-01 npm run dev` pretends it's another
+  day (ignored in production).
+
+## How instant updates work
+
+After any write, a database trigger broadcasts a data-less "changed" ping on the public Realtime channel
+`gharkaam-sync`. Open phones receive it and re-fetch the page from the app's own server. Pages also refresh
+when the app comes back to the foreground, so nothing stays stale even if a ping is missed.
+If updates don't arrive, check Supabase → Realtime → Settings and make sure public channels are allowed.
 
 ## How access works
 
@@ -81,3 +105,5 @@ Add everyone else under **Settings → Manage profiles**.
 2. In Vercel: **Add New → Project**, import the repo (framework: Next.js, defaults are fine).
 3. Add the environment variables from `.env.local` under **Settings → Environment Variables**.
 4. Deploy. Run `npm run db:migrate` locally whenever a new migration is added (it targets the same Supabase database).
+5. Settings → Functions → **Function Region**: pick the region closest to your Supabase project
+   (Tokyo `hnd1` for `ap-northeast-1`, Mumbai `bom1` for `ap-south-1`), then redeploy.
