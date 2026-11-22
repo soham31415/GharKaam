@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:check": "tsx scripts/db-check.ts",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx --conditions=react-server scripts/seed.ts"
   },

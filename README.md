@@ -44,7 +44,7 @@ Requirements: Node 22+, npm.
    - **FAMILY_PASSCODE**: the passcode your family will type once per device.
    - **SESSION_SECRET**: `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
    - The Realtime, VAPID and cron values are needed from later phases; leave them for now.
-4. Create the tables: `npm run db:migrate`
+4. Check the connection: `npm run db:check` (explains what is wrong if it fails), then create the tables: `npm run db:migrate`
 5. Start the app: `npm run dev` → http://localhost:3000
 
 The first visit asks for the passcode, then lets you create the first profile, which is admin.
@@ -61,6 +61,7 @@ Add everyone else under **Settings → Manage profiles**.
 | `npm run lint` | ESLint, including layering rules |
 | `npm run db:generate` | Create a migration after editing `src/lib/db/schema.ts` |
 | `npm run db:migrate` | Apply pending migrations (uses `DIRECT_DATABASE_URL`) |
+| `npm run db:check` | Test both database URLs and explain any connection problem |
 | `npm run db:studio` | Browse the database |
 | `npm run seed` | Sample family (Mom & Dad admins, Rohan, Priya). Only on an empty DB |
 | `npm run seed -- --reset` | **Wipes all app data**, then seeds. Don't run this once the family uses the app |

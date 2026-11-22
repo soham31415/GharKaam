@@ -20,7 +20,9 @@ const nonEmpty = z.string().trim().min(1);
 
 let dbEnv: { DATABASE_URL: string } | undefined;
 export function getDbEnv() {
-  dbEnv ??= read("database", { DATABASE_URL: nonEmpty });
+  dbEnv ??= read("database", {
+    DATABASE_URL: nonEmpty.refine((v) => !v.includes("<"), "still contains the example placeholder"),
+  });
   return dbEnv;
 }
 
