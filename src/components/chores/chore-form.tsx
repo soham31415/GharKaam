@@ -44,7 +44,7 @@ type State = {
 };
 
 const REPEAT_OPTIONS: { value: RepeatKind; label: string }[] = [
-  { value: "once", label: "One time" },
+  { value: "once", label: "Never (just one day)" },
   { value: "daily", label: "Every N days" },
   { value: "weekly", label: "Weekly on certain days" },
   { value: "monthly_day", label: "Monthly on a date" },

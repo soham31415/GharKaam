@@ -280,7 +280,7 @@ export function describeSpec(spec: RecurrenceSpec): string {
   const until = "until" in spec && spec.until ? `, until ${formatDate(spec.until)}` : "";
   switch (spec.kind) {
     case "once":
-      return "One time";
+      return "Doesn't repeat";
     case "daily":
       return every(spec.interval, "day") + until;
     case "weekly":

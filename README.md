@@ -72,7 +72,7 @@ Add everyone else under **Settings → Manage profiles**.
 ## How chores work
 
 - Each chore has at most **one open task**. Missed dates never pile up.
-- **Repeats:** one time, every N days, weekly on chosen days, monthly on a date (29–31 fall back to the
+- **Repeats:** never (one day only), every N days, weekly on chosen days, monthly on a date (29–31 fall back to the
   month's last day), last day of the month, "2nd Saturday" style, yearly, or a custom iCalendar RRULE.
 - **Next date** is counted either *on the calendar* (bins every Tuesday: done late on Wednesday → next Tuesday)
   or *from when it was last done* (water every 3 days: done Thursday → Sunday).
