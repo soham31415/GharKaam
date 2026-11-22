@@ -22,7 +22,14 @@ export function useToastAction<T = undefined>(action: Action<T>) {
       for (const [key, value] of Object.entries(fields)) {
         for (const v of Array.isArray(value) ? value : [value]) fd.append(key, v);
       }
-      const res = await action(null, fd);
+      let res: ActionState<T>;
+      try {
+        res = await action(null, fd);
+      } catch {
+        // Network failure (offline, server unreachable). Real bugs still show up in the server logs.
+        toast.error(navigator.onLine ? "Couldn't reach the server. Try again." : "You're offline. Try again when connected.");
+        return;
+      }
       if (res?.ok) {
         if (res.message) toast.success(opts.prefix ? `${opts.prefix}: ${res.message}` : res.message);
         opts.onOk?.(res.data);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OccurrenceCard } from "@/components/chores/occurrence-card";
+import { InstallHint } from "@/components/pwa/install-guide";
 import { buttonVariants } from "@/components/ui/button";
 import { getTodayView } from "@/lib/services/chores";
 import { countShoppingList } from "@/lib/services/inventory";
@@ -33,6 +34,7 @@ export default async function TodayPage() {
           New chore
         </Link>
       </div>
+      <InstallHint />
       {shoppingCount > 0 ? (
         <Link href="/shopping" className="text-sm underline underline-offset-4">
           Shopping list: {shoppingCount} item{shoppingCount === 1 ? "" : "s"}

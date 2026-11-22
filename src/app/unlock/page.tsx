@@ -18,6 +18,9 @@ export default async function UnlockPage({ searchParams }: PageProps<"/unlock">)
           <UnlockForm next={typeof next === "string" ? next : undefined} />
         </CardContent>
       </Card>
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        Just added Gharkaam to your iPhone home screen? It keeps its own storage, so enter the passcode once more here.
+      </p>
     </main>
   );
 }

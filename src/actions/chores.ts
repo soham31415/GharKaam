@@ -81,7 +81,7 @@ export async function undoOccurrenceAction(_prev: ActionState, formData: FormDat
     const actor = await requireProfile();
     await chores.undoOccurrence(actor, occurrenceIdSchema.parse(formToObject(formData)).id);
     refreshAll();
-    return ok(undefined, "Undone.");
+    return ok(undefined, "Undone. It's open again.");
   } catch (e) {
     return fail(e);
   }

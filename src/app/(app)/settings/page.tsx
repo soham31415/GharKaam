@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { lockDeviceAction, switchProfileAction } from "@/actions/session";
+import { InstallStatus } from "@/components/pwa/install-guide";
 import { SubmitButton } from "@/components/submit-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,20 @@ export default async function SettingsPage() {
               Shopping categories
             </Link>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>App</CardTitle>
+          <CardDescription>
+            <InstallStatus />
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/settings/install" className={buttonVariants({ variant: "outline" })}>
+            Install on your phone
+          </Link>
         </CardContent>
       </Card>
 

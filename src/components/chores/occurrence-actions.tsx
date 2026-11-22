@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
-import { toast } from "sonner";
+import { useActionState } from "react";
 import {
   closeOccurrenceAction,
   moveOccurrenceAction,
@@ -13,6 +12,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useToastAction } from "@/components/use-toast-action";
 import type { PersonRef } from "@/lib/types";
 
 /**
@@ -20,22 +20,13 @@ import type { PersonRef } from "@/lib/types";
  * the task (and this component) disappears from the list once it's closed.
  */
 export function DoneSkipButtons({ occurrenceId, title }: { occurrenceId: string; title: string }) {
-  const [pending, start] = useTransition();
-  const run = (status: "done" | "skipped") =>
-    start(async () => {
-      const fd = new FormData();
-      fd.set("id", occurrenceId);
-      fd.set("status", status);
-      const res = await closeOccurrenceAction(null, fd);
-      if (res?.ok) toast.success(`${title}: ${res.message}`);
-      else if (res) toast.error(res.error);
-    });
+  const [pending, run] = useToastAction(closeOccurrenceAction);
   return (
     <div className="flex gap-2">
-      <Button onClick={() => run("done")} disabled={pending}>
+      <Button onClick={() => run({ id: occurrenceId, status: "done" }, { prefix: title })} disabled={pending}>
         Done
       </Button>
-      <Button variant="outline" onClick={() => run("skipped")} disabled={pending}>
+      <Button variant="outline" onClick={() => run({ id: occurrenceId, status: "skipped" }, { prefix: title })} disabled={pending}>
         Skip
       </Button>
     </div>
@@ -43,18 +34,10 @@ export function DoneSkipButtons({ occurrenceId, title }: { occurrenceId: string;
 }
 
 export function UndoButton({ occurrenceId, title }: { occurrenceId: string; title: string }) {
-  const [pending, start] = useTransition();
-  const undo = () =>
-    start(async () => {
-      const fd = new FormData();
-      fd.set("id", occurrenceId);
-      const res = await undoOccurrenceAction(null, fd);
-      if (res?.ok) toast.success(`${title}: undone. It's open again.`);
-      else if (res) toast.error(res.error);
-    });
+  const [pending, run] = useToastAction(undoOccurrenceAction);
   return (
     <div>
-      <Button variant="outline" size="sm" onClick={undo} disabled={pending}>
+      <Button variant="outline" size="sm" onClick={() => run({ id: occurrenceId }, { prefix: title })} disabled={pending}>
         {pending ? "Undoing…" : "Undo"}
       </Button>
     </div>
