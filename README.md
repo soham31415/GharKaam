@@ -6,7 +6,7 @@ A small PWA for one family to share recurring chores and keep the home stocked.
 - **Instant updates** between phones via Supabase Realtime (data-less "something changed" pings).
 - **Daily digest** push notification around 8 AM IST.
 
-> Status: phase 2 of 6 (setup, passcode, profiles, chores). Inventory, PWA and push follow.
+> Status: phase 3 of 6 (setup, passcode, profiles, chores, inventory and shopping). PWA and push follow.
 
 ## Stack
 
@@ -66,7 +66,7 @@ Add everyone else under **Settings → Manage profiles**.
 | `npm run db:migrate` | Apply pending migrations (uses `DIRECT_DATABASE_URL`) |
 | `npm run db:check` | Test both database URLs and explain any connection problem |
 | `npm run db:studio` | Browse the database |
-| `npm run seed` | Sample family (Mom & Dad admins, Rohan, Priya) and 12 chores. Only on an empty DB |
+| `npm run seed` | Sample family (Mom & Dad admins, Rohan, Priya), 12 chores and 17 inventory items. Only on an empty DB |
 | `npm run seed -- --reset` | **Wipes all app data**, then seeds. Don't run this once the family uses the app |
 
 ## How chores work
@@ -82,6 +82,23 @@ Add everyone else under **Settings → Manage profiles**.
 - Editing a chore's title keeps the open task as is; changing its schedule recalculates the open task's date.
 - All dates are Asia/Kolkata. For testing, `GHARKAAM_FAKE_TODAY=2026-12-01 npm run dev` pretends it's another
   day (ignored in production).
+
+## How inventory and shopping work
+
+- Each item has a name, category, unit and usual quantity, and optionally a **restock schedule** (same repeat
+  options as chores), always counted from the last purchase: "every 10 days" bought on the 1st is due on the 11th.
+  Items without a schedule only show up when someone taps **Running low**.
+- The **shopping list** shows items marked running low, items due today or overdue, and items due in the next
+  2 days, so one trip covers them. Items only show up early if they were last bought more than 2 days ago;
+  otherwise something bought daily would never leave the list.
+- **Mark bought** (tick several on the list, or one on the item page with a quantity) resets the schedule from
+  today and clears "running low". If two people tick the same item, it's only recorded once.
+- **Not needed** takes an item off the list without buying it, and counts its schedule from today.
+- **Quick add** on the shopping list: a name that's already in the inventory is marked running low (any
+  capitalisation); anything else is added as a one-off item that disappears once bought.
+- Every change is kept in a per-item history (`inventory_events`), which the cooking log will build on later.
+- Admins manage categories (Settings → Shopping categories) and can archive or restore items. Deleting a category
+  moves its items to "Uncategorised".
 
 ## How instant updates work
 

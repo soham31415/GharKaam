@@ -2,6 +2,7 @@ import Link from "next/link";
 import { OccurrenceCard } from "@/components/chores/occurrence-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getTodayView } from "@/lib/services/chores";
+import { countShoppingList } from "@/lib/services/inventory";
 import { requireProfile } from "@/lib/services/session";
 import type { OccurrenceView } from "@/lib/types";
 
@@ -21,7 +22,7 @@ function Section({ title, items, showAssignee }: { title: string; items: Occurre
 
 export default async function TodayPage() {
   const me = await requireProfile();
-  const view = await getTodayView(me);
+  const [view, shoppingCount] = await Promise.all([getTodayView(me), countShoppingList()]);
   const nothing = view.mine.length + view.anyone.length + view.others.length === 0;
 
   return (
@@ -32,6 +33,11 @@ export default async function TodayPage() {
           New chore
         </Link>
       </div>
+      {shoppingCount > 0 ? (
+        <Link href="/shopping" className="text-sm underline underline-offset-4">
+          Shopping list: {shoppingCount} item{shoppingCount === 1 ? "" : "s"}
+        </Link>
+      ) : null}
       {nothing ? <p className="text-muted-foreground">Nothing due today or overdue.</p> : null}
       <Section title="Mine" items={view.mine} showAssignee={false} />
       <Section title="Anyone" items={view.anyone} showAssignee={false} />

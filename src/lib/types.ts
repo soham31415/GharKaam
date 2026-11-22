@@ -78,3 +78,58 @@ export type TodayView = {
   anyone: OccurrenceView[];
   others: OccurrenceView[];
 };
+
+// ── Inventory ───────────────────────────────────────────────────────────────
+
+export type Category = { id: string; name: string; sortOrder: number; itemCount: number };
+
+export type ItemSummary = {
+  id: string;
+  name: string;
+  categoryId: string | null;
+  /** "Uncategorised" when none. */
+  categoryName: string;
+  /** "2 kg", or null when no usual quantity is set. */
+  quantityText: string | null;
+  /** "Every 7 days, counted from the last purchase" or "Only when marked running low". */
+  scheduleText: string;
+  /** "Last bought 3 days ago", or null if never bought. */
+  lastBoughtText: string | null;
+  nextDueOn: DateStr | null;
+  /** "Running low", "Due tomorrow", "3 days overdue", "In stock"… */
+  statusText: string;
+  isLow: boolean;
+  lowFlaggedByName: string | null;
+  isOverdue: boolean;
+  onShoppingList: boolean;
+  /** Why it's on the shopping list, e.g. "Running low (Rohan) · Due tomorrow". */
+  shoppingReason: string;
+  isOneOff: boolean;
+  archived: boolean;
+  notes: string | null;
+};
+
+export type ItemGroup = { categoryId: string | null; categoryName: string; items: ItemSummary[] };
+
+/** Values to pre-fill the item form when editing. */
+export type ItemFormValues = {
+  name: string;
+  categoryId: string | null;
+  unit: string | null;
+  usualQuantity: string | null;
+  notes: string | null;
+  spec: RecurrenceSpec;
+  lastRestockedOn: DateStr | null;
+};
+
+export type InventoryEventView = {
+  id: string;
+  /** "Bought 2 kg", "Marked running low", "Not needed this time"… */
+  text: string;
+  byName: string | null;
+  atLabel: string;
+};
+
+export type ItemDetail = ItemSummary & { form: ItemFormValues; events: InventoryEventView[] };
+
+export type ShoppingListView = { today: DateStr; count: number; groups: ItemGroup[] };

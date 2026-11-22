@@ -27,6 +27,11 @@ export default async function SettingsPage() {
               Manage profiles
             </Link>
           ) : null}
+          {me.isAdmin ? (
+            <Link href="/settings/categories" className={buttonVariants({ variant: "outline" })}>
+              Shopping categories
+            </Link>
+          ) : null}
         </CardContent>
       </Card>
 

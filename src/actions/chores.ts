@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/domain/dates";
 import { today } from "@/lib/services/clock";
@@ -15,12 +14,8 @@ import {
   reassignSchema,
 } from "@/lib/validation/chores";
 import { formToObject } from "@/lib/validation/form";
+import { refreshAll } from "./refresh";
 import { fail, ok, type ActionState } from "./result";
-
-/** Everything is per-family and small, so just refresh all pages after a change. */
-function refreshAll() {
-  revalidatePath("/", "layout");
-}
 
 export async function createChoreAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   let id: string;

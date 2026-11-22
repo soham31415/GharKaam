@@ -4,6 +4,7 @@ import {
   date,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
@@ -128,3 +129,78 @@ export const choreOccurrences = pgTable(
 
 export type OccurrenceRow = typeof choreOccurrences.$inferSelect;
 export type NewOccurrenceRow = typeof choreOccurrences.$inferInsert;
+
+// ── Inventory ───────────────────────────────────────────────────────────────
+
+export const categories = pgTable(
+  "categories",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("categories_name_unique").on(sql`lower(${t.name})`)],
+).enableRLS();
+
+export type CategoryRow = typeof categories.$inferSelect;
+
+export const inventoryItems = pgTable(
+  "inventory_items",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    /** null = uncategorised. */
+    categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    /** Free text, e.g. "kg", "L", "packet". */
+    unit: text("unit"),
+    /** How much is usually bought; read as a decimal string. */
+    usualQuantity: numeric("usual_quantity", { precision: 10, scale: 2, mode: "string" }),
+    /** RRULE body without DTSTART, counted from the last restock; null = only when flagged low. */
+    restockRrule: text("restock_rrule"),
+    lastRestockedOn: dateStr("last_restocked_on"),
+    /** The day the current restock cycle counts from: the last purchase, or the day it was marked "not needed". */
+    restockCountedFrom: dateStr("restock_counted_from"),
+    /** Cached result of the restock rule, kept up to date by the inventory service. */
+    nextDueOn: dateStr("next_due_on"),
+    isLow: boolean("is_low").notNull().default(false),
+    lowFlaggedBy: uuid("low_flagged_by").references(() => profiles.id, { onDelete: "set null" }),
+    lowFlaggedAt: timestamp("low_flagged_at", { withTimezone: true }),
+    /** Added straight to the shopping list; archived once bought. */
+    isOneOff: boolean("is_one_off").notNull().default(false),
+    notes: text("notes"),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("inventory_items_active_idx").on(t.archivedAt, t.isLow, t.nextDueOn),
+    index("inventory_items_category_idx").on(t.categoryId),
+  ],
+).enableRLS();
+
+export type InventoryItemRow = typeof inventoryItems.$inferSelect;
+export type NewInventoryItemRow = typeof inventoryItems.$inferInsert;
+
+/** `used` and `adjusted` are for the cooking log later; meals will add a nullable meal_id. */
+export const inventoryEventType = pgEnum("inventory_event_type", ["restocked", "flagged_low", "unflagged", "used", "adjusted"]);
+
+/** Append-only log of everything that happens to an item. */
+export const inventoryEvents = pgTable(
+  "inventory_events",
+  {
+    id: id(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => inventoryItems.id, { onDelete: "cascade" }),
+    type: inventoryEventType("type").notNull(),
+    quantity: numeric("quantity", { precision: 10, scale: 2, mode: "string" }),
+    profileId: uuid("profile_id").references(() => profiles.id, { onDelete: "set null" }),
+    note: text("note"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inventory_events_item_idx").on(t.itemId, t.createdAt), index("inventory_events_created_idx").on(t.createdAt)],
+).enableRLS();
+
+export type InventoryEventRow = typeof inventoryEvents.$inferSelect;
+export type NewInventoryEventRow = typeof inventoryEvents.$inferInsert;

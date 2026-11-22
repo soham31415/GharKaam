@@ -22,6 +22,20 @@
       "when": 1795333477847,
       "tag": "0002_realtime_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795341812456,
+      "tag": "0003_inventory",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795341819211,
+      "tag": "0004_inventory_realtime_and_categories",
+      "breakpoints": true
     }
   ]
 }
