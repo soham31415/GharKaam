@@ -43,3 +43,8 @@ next-env.d.ts
 
 # local tooling output
 /.playwright-mcp
+
+# third-party agent skills (installed via npx skills)
+/.claude/skills
+/.agents
+/skills-lock.json

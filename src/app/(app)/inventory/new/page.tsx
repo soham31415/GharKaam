@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { BackLink } from "@/components/shell/back-link";
+import { PageHeader } from "@/components/shell/page-header";
 import { ItemForm } from "@/components/inventory/item-form";
 import { today } from "@/lib/services/clock";
 import { listCategories } from "@/lib/services/inventory";
@@ -9,12 +10,11 @@ export default async function NewItemPage() {
   const categories = await listCategories();
   return (
     <>
-      <Link href="/inventory" className="text-sm underline-offset-4 hover:underline">
-        ← Inventory
-      </Link>
-      <h1 className="text-xl font-semibold">Add item</h1>
-      <p className="text-sm text-muted-foreground">After saving, the form stays open so you can add the next item.</p>
-      <ItemForm categories={categories} today={today()} />
+      <BackLink href="/inventory">Inventory</BackLink>
+      <PageHeader title="Add item" showProfile={false} subtitle="After saving, the form stays open so you can add the next item." />
+      <div className="rounded-card bg-card p-4">
+        <ItemForm categories={categories} today={today()} />
+      </div>
     </>
   );
 }

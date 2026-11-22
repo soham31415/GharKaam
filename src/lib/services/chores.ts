@@ -4,7 +4,7 @@ import { getDb, type DbOrTx } from "@/lib/db/client";
 import * as q from "@/lib/db/queries/chores";
 import { listActiveProfiles } from "@/lib/db/queries/profiles";
 import type { ChoreRow, OccurrenceRow } from "@/lib/db/schema";
-import { formatDate, formatTimestamp, isDateStr, relativeDueLabel, type DateStr } from "@/lib/domain/dates";
+import { addDays, formatDate, formatTimestamp, isDateStr, relativeDueLabel, type DateStr } from "@/lib/domain/dates";
 import {
   checkUndo,
   planAfterChoreEdit,
@@ -15,7 +15,7 @@ import {
   type PlannedOccurrence,
 } from "@/lib/domain/occurrences";
 import { describeSpec, rruleToSpec, specToRRule } from "@/lib/domain/recurrence";
-import type { ChoreDetail, ChoreSummary, OccurrenceView, Profile, TodayView } from "@/lib/types";
+import type { ChoreDetail, ChoreSummary, OccurrenceView, PersonRef, Profile, TodayView } from "@/lib/types";
 import type { ChoreInput } from "@/lib/validation/chores";
 import { dateOf, today } from "./clock";
 import { AppError } from "./errors";
@@ -115,6 +115,22 @@ function assignmentText(chore: ChoreRow, rotation: q.RotationRow[], names: Map<s
   return (chore.assigneeId && names.get(chore.assigneeId)) || "Anyone (assignee archived)";
 }
 
+function involvedPeople(
+  chore: ChoreRow,
+  rotation: q.RotationRow[],
+  people: Map<string, { name: string; avatar: string | null }>,
+): PersonRef[] {
+  const ref = (id: string): PersonRef | null => {
+    const p = people.get(id);
+    return p ? { id, name: p.name, avatar: p.avatar } : null;
+  };
+  if (chore.assignmentMode === "rotation") {
+    return rotation.filter((r) => r.active).flatMap((r) => ref(r.profileId) ?? []);
+  }
+  if (chore.assignmentMode === "fixed" && chore.assigneeId) return [ref(chore.assigneeId)].flatMap((p) => p ?? []);
+  return [];
+}
+
 function scheduleText(chore: ChoreRow): string {
   const base = describeSpec(rruleToSpec(chore.rrule));
   if (!chore.rrule) return `${base} (${formatDate(chore.startDate)})`;
@@ -142,14 +158,17 @@ async function undoableIds(db: DbOrTx, rows: q.OccurrenceWithPeople[]): Promise<
 
 export async function getTodayView(me: Profile): Promise<TodayView> {
   const t = today();
-  const rows = await q.listPendingDueBy(getDb(), t);
-  const views = rows.map((r) => toView(r, t));
+  const tomorrow = addDays(t, 1);
+  const rows = await q.listPendingDueBy(getDb(), tomorrow);
+  const all = rows.map((r) => toView(r, t));
+  const views = all.filter((v) => v.dueDate <= t);
   return {
     today: t,
     todayLabel: formatDate(t, t),
     mine: views.filter((v) => v.assignee?.id === me.id),
     anyone: views.filter((v) => v.assignee === null),
     others: views.filter((v) => v.assignee !== null && v.assignee.id !== me.id),
+    tomorrow: all.filter((v) => v.dueDate === tomorrow),
   };
 }
 
@@ -164,6 +183,7 @@ export async function listChores(me: Profile, opts: { filter: "all" | "mine"; ar
     listActiveProfiles(db),
   ]);
   const names = new Map(people.map((p) => [p.id, p.name]));
+  const byId = new Map(people.map((p) => [p.id, p]));
   const pendingByChore = new Map(pending.map((p) => [p.occurrence.choreId, p]));
 
   const items = choreRows.map((chore): { summary: ChoreSummary; involvesMe: boolean } => {
@@ -178,6 +198,7 @@ export async function listChores(me: Profile, opts: { filter: "all" | "mine"; ar
         scheduleMode: chore.scheduleMode,
         assignmentMode: chore.assignmentMode,
         assignmentText: assignmentText(chore, rotation, names),
+        people: involvedPeople(chore, rotation, byId),
         archived: chore.archivedAt !== null,
         next: p ? toView(p, t) : null,
       },
@@ -215,6 +236,7 @@ export async function getChoreDetail(id: string): Promise<ChoreDetail | null> {
     scheduleMode: chore.scheduleMode,
     assignmentMode: chore.assignmentMode,
     assignmentText: assignmentText(chore, rotation, names),
+    people: involvedPeople(chore, rotation, new Map(people.map((p) => [p.id, p]))),
     archived: chore.archivedAt !== null,
     next: pendingRows[0] ? toView(pendingRows[0], t) : null,
     form: {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
+import { AppMark } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { detectPlatform, getInstallPrompt, isStandalone, onInstallPromptChange, setInstallPrompt, type Platform } from "./pwa-state";
@@ -172,15 +173,16 @@ export function InstallHint() {
   const dismissed = useSyncExternalStore(subscribeHint, () => hintDismissed(), () => true);
   if (!env || env.standalone || env.platform === "other" || dismissed) return null;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
-      <span>
+    <div className="flex items-center gap-3 rounded-card bg-card px-3.5 py-3">
+      <AppMark size={40} className="shrink-0" />
+      <span className="min-w-0 flex-1 text-sm leading-snug">
         Add Gharkaam to your home screen for a full-screen app{env.platform === "ios" ? " and notifications" : ""}.
       </span>
-      <span className="flex gap-2">
-        <Link href="/settings/install" className="underline">
+      <span className="flex shrink-0 items-center gap-1">
+        <Link href="/settings/install" className="pressable rounded-full bg-primary-tint px-3 py-1.5 text-sm font-semibold text-primary">
           How?
         </Link>
-        <button type="button" onClick={dismissHint} className="text-muted-foreground underline">
+        <button type="button" onClick={dismissHint} className="pressable rounded-full px-2.5 py-1.5 text-sm font-semibold text-muted-foreground">
           Hide
         </button>
       </span>

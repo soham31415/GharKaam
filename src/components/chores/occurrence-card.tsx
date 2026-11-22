@@ -1,33 +1,8 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Pill } from "@/components/shell/grouped";
 import type { OccurrenceView } from "@/lib/types";
-import { DoneSkipButtons } from "./occurrence-actions";
 
-/** An open task with Done / Skip. */
-export function OccurrenceCard({ occ, showAssignee = true }: { occ: OccurrenceView; showAssignee?: boolean }) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Link href={`/chores/${occ.choreId}`} className="font-medium underline-offset-4 hover:underline">
-            {occ.choreTitle}
-          </Link>
-          <Badge variant={occ.isOverdue ? "destructive" : "secondary"}>{occ.dueLabel}</Badge>
-        </div>
-        {showAssignee ? (
-          <p className="text-sm text-muted-foreground">
-            {occ.assignee ? `${occ.assignee.avatar ?? ""} ${occ.assignee.name}`.trim() : "Anyone"}
-          </p>
-        ) : null}
-        {occ.choreNotes ? <p className="text-sm text-muted-foreground">{occ.choreNotes}</p> : null}
-        <DoneSkipButtons occurrenceId={occ.id} title={occ.choreTitle} />
-      </CardContent>
-    </Card>
-  );
-}
-
-/** A done/skipped task in history. */
+/** A done/skipped task in history (a row inside a GroupCard). */
 export function ClosedOccurrenceRow({
   occ,
   showTitle = true,
@@ -37,21 +12,24 @@ export function ClosedOccurrenceRow({
   showTitle?: boolean;
   undo?: React.ReactNode;
 }) {
+  const done = occ.status === "done";
   return (
-    <li className="flex flex-col gap-1 border-b py-2 last:border-b-0">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={occ.status === "done" ? "secondary" : "outline"}>{occ.status === "done" ? "Done" : "Skipped"}</Badge>
-        {showTitle ? (
-          <Link href={`/chores/${occ.choreId}`} className="font-medium underline-offset-4 hover:underline">
-            {occ.choreTitle}
-          </Link>
-        ) : null}
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <Pill tone={done ? "done" : "neutral"}>{done ? "Done" : "Skipped"}</Pill>
+          {showTitle ? (
+            <Link href={`/chores/${occ.choreId}`} className="truncate text-base font-semibold">
+              {occ.choreTitle}
+            </Link>
+          ) : null}
+        </div>
+        <p className="text-[13px] leading-snug text-muted-foreground">
+          {done ? "Done" : "Skipped"} by {occ.closedByName ?? "someone"} · {occ.closedLabel}
+          {occ.assignee && occ.assignee.name !== occ.closedByName ? ` · was ${occ.assignee.name}'s turn` : ""}
+        </p>
       </div>
-      <p className="text-sm text-muted-foreground">
-        {occ.status === "done" ? "Done" : "Skipped"} by {occ.closedByName ?? "someone"} · {occ.closedLabel}
-        {occ.assignee && occ.assignee.name !== occ.closedByName ? ` · was ${occ.assignee.name}'s turn` : ""}
-      </p>
       {undo}
-    </li>
+    </div>
   );
 }

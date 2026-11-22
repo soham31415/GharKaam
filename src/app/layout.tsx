@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
-import { APP_NAME, THEME_COLOR } from "@/lib/config";
+import { APP_NAME, THEME_COLOR, THEME_COLOR_DARK } from "@/lib/config";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Large titles and friendly headings only. Everything else uses the phone's system font.
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -32,15 +29,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: THEME_COLOR,
+  // Lets the layout reach under the notch and home indicator; safe-area padding keeps content clear.
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: THEME_COLOR },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLOR_DARK },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${nunito.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
         {children}
-        <Toaster position="top-center" />
+        <Toaster />
         <ServiceWorkerRegister />
       </body>
     </html>

@@ -1,3 +1,5 @@
+import { BackLink } from "@/components/shell/back-link";
+import { PageHeader } from "@/components/shell/page-header";
 import Link from "next/link";
 import { AddCategoryForm, CategoryRow } from "@/components/inventory/category-forms";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +22,8 @@ export default async function CategoriesPage() {
   const categories = await listCategories();
   return (
     <>
-      <Link href="/settings" className="text-sm underline-offset-4 hover:underline">
-        ← Settings
-      </Link>
-      <h1 className="text-xl font-semibold">Categories</h1>
+      <BackLink href="/settings">Settings</BackLink>
+      <PageHeader title="Categories" showProfile={false} />
       <Card>
         <CardHeader>
           <CardTitle>Add a category</CardTitle>

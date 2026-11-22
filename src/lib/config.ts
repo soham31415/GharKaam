@@ -1,10 +1,11 @@
 /** App-wide constants. No secrets here: this file can be imported anywhere. */
 
 export const APP_NAME = "Gharkaam";
-/** Placeholder brand colour for icons and the splash screen (design phase will replace it). */
-export const APP_ICON_BACKGROUND = "#166534";
-/** Browser/status bar colour; matches the plain white header. */
-export const THEME_COLOR = "#ffffff";
+/** Brand "marigold bright": app icon background. */
+export const APP_ICON_BACKGROUND = "#E8650F";
+/** Browser/status bar colour: the page ground colour, light and dark. */
+export const THEME_COLOR = "#F2F2F7";
+export const THEME_COLOR_DARK = "#000000";
 
 /** Every schedule, due date and reminder uses this timezone. IST has no daylight saving. */
 export const TIMEZONE = "Asia/Kolkata";

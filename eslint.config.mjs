@@ -36,6 +36,18 @@ const eslintConfig = defineConfig([
     ]),
   },
   {
+    // Presentation helpers (labels, grouping, filters): pure, like domain.
+    files: ["src/lib/view/**/*.ts"],
+    rules: restrict([
+      { group: "@/lib/db/*", message: "view helpers are pure: no database." },
+      { group: "@/lib/services/*", message: "view helpers are pure: no services." },
+      { group: "next/*", message: "view helpers are pure: no Next.js." },
+      noActions,
+      noUi,
+      noApp,
+    ]),
+  },
+  {
     files: ["src/lib/db/**/*.ts"],
     rules: restrict([
       { group: "@/lib/services/*", message: "queries must not call services." },
@@ -60,7 +72,17 @@ const eslintConfig = defineConfig([
     files: ["src/components/**/*.{ts,tsx}"],
     rules: restrict([noDb, noServices, noApp]),
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "drizzle/**"]),
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "drizzle/**",
+    // Third-party agent skills and the design handoff aren't app code.
+    ".claude/**",
+    ".agents/**",
+    "gharkaam-design-handoff/**",
+  ]),
 ]);
 
 export default eslintConfig;

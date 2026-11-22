@@ -1,3 +1,5 @@
+import { BackLink } from "@/components/shell/back-link";
+import { PageHeader } from "@/components/shell/page-header";
 import Link from "next/link";
 import { AddProfileForm } from "@/components/profiles/add-profile-form";
 import { ArchivedProfileRow, ManageProfileCard } from "@/components/profiles/manage-profile-card";
@@ -22,7 +24,8 @@ export default async function ManageProfilesPage() {
   const { active, archived } = await listProfilesForManagement();
   return (
     <>
-      <h1 className="text-xl font-semibold">Profiles</h1>
+      <BackLink href="/settings">Settings</BackLink>
+      <PageHeader title="Profiles" showProfile={false} />
 
       <Card>
         <CardHeader>

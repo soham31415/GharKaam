@@ -22,9 +22,9 @@ export default function AppError({ error, retry }: { error: Error & { digest?: s
   }, [error]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <h1 className="text-xl font-semibold">{offline ? "You're offline" : "Something went wrong"}</h1>
-      <p className="text-muted-foreground">
+    <div className="flex flex-col items-center gap-3 py-10 text-center">
+      <h1 className="font-heading text-[26px] font-black">{offline ? "You're offline" : "Something went wrong"}</h1>
+      <p className="max-w-[300px] text-[15px] leading-[1.45] text-muted-foreground">
         {offline
           ? "Reconnect to the internet and try again. If you had just tapped something, check whether it went through."
           : "That didn't work. Try again; if it keeps happening, reload the app."}

@@ -15,9 +15,14 @@ function createDb(): Database {
   const client = postgres(getDbEnv().DATABASE_URL, {
     // Supabase's transaction pooler (port 6543) does not support prepared statements.
     prepare: false,
-    // Serverless functions: keep the pool tiny and let idle connections go.
-    max: 3,
+    // Serverless functions: keep the pool small and let idle connections go.
+    max: 5,
     idle_timeout: 20,
+    // Never pipeline several queries on one connection: Supabase's transaction
+    // pooler stalls on pipelined queries until statement_timeout (minutes), which
+    // froze pages whenever a few renders overlapped. Extra queries wait for a
+    // free connection instead.
+    max_pipeline: 1,
   });
   return drizzle(client, { schema });
 }

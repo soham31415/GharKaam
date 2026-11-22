@@ -1,16 +1,26 @@
-import Link from "next/link";
+import { cn } from "cn";
+import { Repeat } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ArchiveChoreButton } from "@/components/chores/archive-chore-button";
-import { ChoreForm } from "@/components/chores/chore-form";
+import { EditChoreSheet } from "@/components/chores/new-chore-sheet";
 import { DoneSkipButtons, ReassignMoveForms, UndoButton } from "@/components/chores/occurrence-actions";
 import { ClosedOccurrenceRow } from "@/components/chores/occurrence-card";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnyoneAvatar, Avatar } from "@/components/people/avatar";
+import { BackLink } from "@/components/shell/back-link";
+import { GroupCard, Pill, Section } from "@/components/shell/grouped";
+import { PageHeader } from "@/components/shell/page-header";
 import { getChoreDetail } from "@/lib/services/chores";
-import { today } from "@/lib/services/clock";
+import { today as todayIn } from "@/lib/services/clock";
 import { listPeople } from "@/lib/services/profiles";
 import { requireProfile } from "@/lib/services/session";
 import { uuid } from "@/lib/validation/form";
+import { dateTile, whoText } from "@/lib/view/chores";
+
+const TILE = {
+  danger: "bg-danger text-danger-foreground",
+  soon: "bg-soon text-soon-foreground",
+  neutral: "bg-neutral text-[#3A3A3C] dark:text-[#E5E5EA]",
+};
 
 export default async function ChorePage({ params }: PageProps<"/chores/[id]">) {
   const me = await requireProfile();
@@ -18,77 +28,82 @@ export default async function ChorePage({ params }: PageProps<"/chores/[id]">) {
   if (!uuid.safeParse(id).success) notFound();
   const [chore, people] = await Promise.all([getChoreDetail(id), listPeople()]);
   if (!chore) notFound();
+  const t = todayIn();
+  const tile = dateTile(chore.next?.dueDate ?? null, t);
 
   return (
     <>
-      <Link href="/chores" className="text-sm underline-offset-4 hover:underline">
-        ← All chores
-      </Link>
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">
-          {chore.title} {chore.archived ? <Badge variant="outline">Archived</Badge> : null}
-        </h1>
-        <p className="text-sm text-muted-foreground">{chore.scheduleText}</p>
-        <p className="text-sm text-muted-foreground">{chore.assignmentText}</p>
-        {chore.notes ? <p className="text-sm">{chore.notes}</p> : null}
-      </div>
+      <BackLink href="/chores">Chores</BackLink>
+      <PageHeader
+        title={chore.title}
+        trailing={!chore.archived ? <EditChoreSheet choreId={chore.id} title={chore.title} values={chore.form} today={t} /> : null}
+        subtitle={chore.archived ? <Pill>Archived</Pill> : undefined}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Next</CardTitle>
-          <CardDescription>
-            {chore.next
-              ? `${chore.next.dueLabel} · ${chore.next.assignee ? chore.next.assignee.name : "Anyone"}`
-              : chore.archived
+      <GroupCard>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Repeat aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <span className="text-base">{chore.scheduleText}</span>
+        </div>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <span className="inline-flex shrink-0 -space-x-[5px]">
+            {chore.people.length === 0 ? <AnyoneAvatar ring /> : chore.people.map((p) => <Avatar key={p.id} person={p} ring />)}
+          </span>
+          <span className="text-base">{chore.assignmentMode === "rotation" ? chore.assignmentText.replace("Rotates: ", "Takes turns: ") : whoText(chore)}</span>
+        </div>
+        {chore.notes ? <p className="px-4 py-3 text-[15px] text-secondary-foreground">{chore.notes}</p> : null}
+      </GroupCard>
+
+      <Section label="Next">
+        <GroupCard>
+          {chore.next ? (
+            <>
+              <div className="flex flex-col gap-3 p-4">
+                <div className="flex items-center gap-3">
+                  <span className={cn("flex h-[50px] w-[46px] shrink-0 flex-col items-center justify-center rounded-tile", TILE[tile.tone])}>
+                    <span className="text-[10.5px] font-bold tracking-[0.4px]">{tile.top}</span>
+                    <span className="font-heading text-[21px] leading-[1.05] font-black">{tile.day}</span>
+                  </span>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[17px] font-semibold">{chore.next.dueLabel}</span>
+                    <span className="text-[13px] text-muted-foreground">{chore.next.assignee ? chore.next.assignee.name : "Anyone"}</span>
+                  </span>
+                </div>
+                <DoneSkipButtons occurrenceId={chore.next.id} title={chore.title} />
+              </div>
+              <ReassignMoveForms
+                occurrenceId={chore.next.id}
+                assigneeId={chore.next.assignee?.id ?? null}
+                dueDate={chore.next.dueDate}
+                people={people}
+              />
+            </>
+          ) : (
+            <p className="px-4 py-3.5 text-[15px] text-muted-foreground">
+              {chore.archived
                 ? "Archived chores have no open task."
                 : "No upcoming date. The chore is finished; change its schedule to bring it back."}
-          </CardDescription>
-        </CardHeader>
-        {chore.next ? (
-          <CardContent className="flex flex-col gap-4">
-            <DoneSkipButtons occurrenceId={chore.next.id} title={chore.title} />
-            <ReassignMoveForms
-              occurrenceId={chore.next.id}
-              assigneeId={chore.next.assignee?.id ?? null}
-              dueDate={chore.next.dueDate}
-              people={people}
-            />
-          </CardContent>
-        ) : null}
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {chore.history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Not done yet.</p>
-          ) : (
-            <ul>
-              {chore.history.map((occ) => (
-                <ClosedOccurrenceRow
-                  key={occ.id}
-                  occ={occ}
-                  showTitle={false}
-                  undo={occ.canUndo ? <UndoButton occurrenceId={occ.id} title={chore.title} /> : null}
-                />
-              ))}
-            </ul>
+            </p>
           )}
-        </CardContent>
-      </Card>
+        </GroupCard>
+      </Section>
 
-      {!chore.archived ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Edit chore</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChoreForm choreId={chore.id} values={chore.form} people={people} today={today()} meId={me.id} />
-          </CardContent>
-        </Card>
-      ) : null}
+      <Section label="History">
+        <GroupCard>
+          {chore.history.length === 0 ? (
+            <p className="px-4 py-3.5 text-[15px] text-muted-foreground">Not done yet.</p>
+          ) : (
+            chore.history.map((occ) => (
+              <ClosedOccurrenceRow
+                key={occ.id}
+                occ={occ}
+                showTitle={false}
+                undo={occ.canUndo ? <UndoButton occurrenceId={occ.id} title={chore.title} /> : null}
+              />
+            ))
+          )}
+        </GroupCard>
+      </Section>
 
       {me.isAdmin ? <ArchiveChoreButton choreId={chore.id} archived={chore.archived} /> : null}
     </>

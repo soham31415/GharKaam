@@ -1,66 +1,67 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { lockDeviceAction, switchProfileAction } from "@/actions/session";
+import { Avatar } from "@/components/people/avatar";
 import { InstallStatus } from "@/components/pwa/install-guide";
+import { BackLink } from "@/components/shell/back-link";
+import { GroupCard, Section } from "@/components/shell/grouped";
+import { PageHeader } from "@/components/shell/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireProfile } from "@/lib/services/session";
+
+function LinkRow({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 text-base active:bg-muted">
+      {children}
+      <ChevronRight aria-hidden="true" className="size-4 text-chevron" strokeWidth={2.6} />
+    </Link>
+  );
+}
 
 export default async function SettingsPage() {
   const me = await requireProfile();
   return (
     <>
-      <h1 className="text-xl font-semibold">Settings</h1>
+      <BackLink href="/more">More</BackLink>
+      <PageHeader title="Settings" showProfile={false} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {me.avatar} {me.name}
-          </CardTitle>
-          <CardDescription>{me.isAdmin ? "Admin profile" : "Member profile"}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <form action={switchProfileAction}>
-            <SubmitButton variant="outline">Switch profile</SubmitButton>
+      <Section label="Profile">
+        <GroupCard>
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <Avatar person={me} size="lg" />
+            <div className="flex flex-col">
+              <span className="text-[17px] font-semibold">{me.name}</span>
+              <span className="text-[13px] text-muted-foreground">{me.isAdmin ? "Admin profile" : "Member profile"}</span>
+            </div>
+          </div>
+          <form action={switchProfileAction} className="px-4 py-2.5">
+            <SubmitButton variant="secondary" className="w-full">
+              Switch profile
+            </SubmitButton>
           </form>
-          {me.isAdmin ? (
-            <Link href="/settings/profiles" className={buttonVariants({ variant: "outline" })}>
-              Manage profiles
-            </Link>
-          ) : null}
-          {me.isAdmin ? (
-            <Link href="/settings/categories" className={buttonVariants({ variant: "outline" })}>
-              Shopping categories
-            </Link>
-          ) : null}
-        </CardContent>
-      </Card>
+          {me.isAdmin ? <LinkRow href="/settings/profiles">Manage profiles</LinkRow> : null}
+          {me.isAdmin ? <LinkRow href="/settings/categories">Shopping categories</LinkRow> : null}
+        </GroupCard>
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>App</CardTitle>
-          <CardDescription>
+      <Section label="App">
+        <GroupCard>
+          <div className="px-4 py-3">
             <InstallStatus />
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/settings/install" className={buttonVariants({ variant: "outline" })}>
-            Install on your phone
-          </Link>
-        </CardContent>
-      </Card>
+          </div>
+          <LinkRow href="/settings/install">Install on your phone</LinkRow>
+        </GroupCard>
+      </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>This device</CardTitle>
-          <CardDescription>Locking asks for the family passcode again on this device only.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={lockDeviceAction}>
-            <SubmitButton variant="destructive">Lock this device</SubmitButton>
+      <Section label="This device" footer="Locking asks for the family passcode again on this device only.">
+        <GroupCard>
+          <form action={lockDeviceAction} className="px-4 py-2.5">
+            <SubmitButton variant="destructive" className="w-full">
+              Lock this device
+            </SubmitButton>
           </form>
-        </CardContent>
-      </Card>
+        </GroupCard>
+      </Section>
     </>
   );
 }

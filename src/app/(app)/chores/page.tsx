@@ -1,72 +1,107 @@
+import { cn } from "cn";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { NewChoreSheet } from "@/components/chores/new-chore-sheet";
+import { SegmentedLinks } from "@/components/form/controls";
+import { HappyHouse } from "@/components/illustrations";
+import { AnyoneAvatar, Avatar } from "@/components/people/avatar";
+import { EmptyState, GroupCard, Section } from "@/components/shell/grouped";
+import { PageHeader } from "@/components/shell/page-header";
 import { listChores } from "@/lib/services/chores";
+import { today as todayIn } from "@/lib/services/clock";
 import { requireProfile } from "@/lib/services/session";
+import type { ChoreSummary } from "@/lib/types";
+import { choreBadge, dateTile, groupChores, whoText } from "@/lib/view/chores";
 
 const TABS = [
-  { key: "all", label: "All chores", href: "/chores" },
-  { key: "mine", label: "My chores", href: "/chores?filter=mine" },
-  { key: "archived", label: "Archived", href: "/chores?filter=archived" },
-] as const;
+  { value: "all", label: "All", href: "/chores" },
+  { value: "mine", label: "Mine", href: "/chores?filter=mine" },
+  { value: "archived", label: "Archived", href: "/chores?filter=archived" },
+];
+
+const EMPTY = {
+  all: { title: "No chores yet", text: "Tap New to add the first one." },
+  mine: { title: "Nothing assigned to you", text: "Chores you do or take turns on show up here." },
+  archived: { title: "No archived chores", text: "Chores an admin archives will rest here." },
+};
+
+const TILE = {
+  danger: "bg-danger text-danger-foreground",
+  soon: "bg-soon text-soon-foreground",
+  neutral: "bg-neutral text-[#3A3A3C] dark:text-[#E5E5EA]",
+};
 
 export default async function ChoresPage({ searchParams }: PageProps<"/chores">) {
   const me = await requireProfile();
   const { filter } = await searchParams;
   const tab = filter === "mine" || filter === "archived" ? filter : "all";
+  const t = todayIn();
   const chores = await listChores(me, { filter: tab === "mine" ? "mine" : "all", archived: tab === "archived" });
+  const groups = groupChores(chores, t);
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">Chores</h1>
-        <Link href="/chores/new" className={buttonVariants({ size: "sm" })}>
-          New chore
-        </Link>
+      <PageHeader title="Chores" trailing={<NewChoreSheet today={t} />} />
+      <div className="-mt-1.5">
+        <SegmentedLinks label="Filter chores" value={tab} options={TABS} />
       </div>
-      <nav className="flex gap-3 text-sm">
-        {TABS.map((t) => (
-          <Link key={t.key} href={t.href} className={t.key === tab ? "font-semibold underline underline-offset-4" : "underline-offset-4 hover:underline"}>
-            {t.label}
-          </Link>
-        ))}
-      </nav>
 
-      {chores.length === 0 ? (
-        <p className="text-muted-foreground">
-          {tab === "archived" ? "No archived chores." : tab === "mine" ? "Nothing assigned to you." : "No chores yet."}
-        </p>
-      ) : null}
-
-      <ul className="flex flex-col gap-2">
-        {chores.map((c) => (
-          <li key={c.id}>
-            <Card size="sm">
-              <CardContent className="flex flex-col gap-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Link href={`/chores/${c.id}`} className="font-medium underline-offset-4 hover:underline">
-                    {c.title}
-                  </Link>
-                  {c.next ? (
-                    <Badge variant={c.next.isOverdue ? "destructive" : "secondary"}>{c.next.dueLabel}</Badge>
-                  ) : (
-                    <Badge variant="outline">{c.archived ? "Archived" : "Finished"}</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">{c.scheduleText}</p>
-                <p className="text-sm text-muted-foreground">
-                  {c.assignmentText}
-                  {c.next && c.assignmentMode === "rotation" ? ` · next: ${c.next.assignee?.name ?? "anyone"}` : ""}
-                  {c.next && c.assignmentMode === "fixed" && c.next.assignee?.name && !c.assignmentText.startsWith(c.next.assignee.name)
-                    ? ` · this time: ${c.next.assignee.name}`
-                    : ""}
-                </p>
-              </CardContent>
-            </Card>
-          </li>
-        ))}
-      </ul>
+      {groups.length === 0 ? (
+        <EmptyState art={<HappyHouse />} title={EMPTY[tab].title}>
+          {EMPTY[tab].text}
+        </EmptyState>
+      ) : (
+        groups.map((g) => (
+          <Section
+            key={g.key}
+            label={`${g.label} · ${g.chores.length}`}
+            labelClassName={g.key === "overdue" ? "text-danger-foreground dark:text-destructive" : undefined}
+            className="-mt-1.5 gap-1.5"
+          >
+            <GroupCard>
+              {g.chores.map((c) => (
+                <ChoreRow key={c.id} chore={c} today={t} />
+              ))}
+            </GroupCard>
+          </Section>
+        ))
+      )}
     </>
+  );
+}
+
+function ChoreRow({ chore, today }: { chore: ChoreSummary; today: string }) {
+  const tile = dateTile(chore.next?.dueDate ?? null, today);
+  const badge = choreBadge(chore);
+  return (
+    <Link href={`/chores/${chore.id}`} className="flex items-center gap-3 px-3 py-[11px] active:bg-muted">
+      <span className={cn("flex h-[50px] w-[46px] shrink-0 flex-col items-center justify-center rounded-tile", TILE[tile.tone])}>
+        {tile.top ? <span className="text-[10.5px] font-bold tracking-[0.4px]">{tile.top}</span> : null}
+        <span className="font-heading text-[21px] leading-[1.05] font-black">{tile.day}</span>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[16.5px] font-semibold">{chore.title}</span>
+          {badge ? (
+            <span
+              className={cn(
+                "shrink-0 rounded-[7px] px-[7px] py-px text-[11.5px] font-bold",
+                badge.tone === "danger" ? "bg-danger text-danger-foreground" : "bg-neutral text-neutral-foreground",
+              )}
+            >
+              {badge.text}
+            </span>
+          ) : null}
+        </span>
+        <span className="truncate text-[13px] text-muted-foreground">{chore.scheduleText}</span>
+        <span className="flex items-center gap-1.5 text-[13px] text-secondary-foreground">
+          <span className="inline-flex -space-x-[5px]">
+            {chore.people.length === 0 ? <AnyoneAvatar ring /> : chore.people.map((p) => <Avatar key={p.id} person={p} ring />)}
+          </span>
+          <span className="ml-1 truncate">{whoText(chore)}</span>
+        </span>
+      </span>
+      <ChevronRight aria-hidden="true" className="size-[15px] shrink-0 text-chevron" strokeWidth={2.6} />
+    </Link>
   );
 }

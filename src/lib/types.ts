@@ -49,6 +49,8 @@ export type ChoreSummary = {
   assignmentMode: AssignmentMode;
   /** "Rohan", "Anyone", or "Rotates: Mom → Dad → Rohan" */
   assignmentText: string;
+  /** Who's involved, in order: the rotation members, or the one assignee. Empty for "anyone". */
+  people: PersonRef[];
   archived: boolean;
   /** The open task, or null if the chore is finished / archived. */
   next: OccurrenceView | null;
@@ -77,6 +79,8 @@ export type TodayView = {
   mine: OccurrenceView[];
   anyone: OccurrenceView[];
   others: OccurrenceView[];
+  /** Everyone's tasks due tomorrow (read-only preview). */
+  tomorrow: OccurrenceView[];
 };
 
 // ── Inventory ───────────────────────────────────────────────────────────────
